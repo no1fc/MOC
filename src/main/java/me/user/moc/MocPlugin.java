@@ -181,7 +181,7 @@ public final class MocPlugin extends JavaPlugin implements Listener, CommandExec
 
 
 
-
+//------ ↓ 능력자들      ↑ 게임 세팅용
 
 
 
