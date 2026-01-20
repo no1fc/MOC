@@ -15,7 +15,8 @@ public class MocCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         // 1. 명령어를 친 사람이 '플레이어'인지 확인합니다. (콘솔창에서 치는 건 무시)
-        if (!(sender instanceof Player p)) return false;
+        if (!(sender instanceof Player p))
+            return false;
 
         // 2. [오류 해결 부분] GameManager를 가져올 때 플러그인 정보를 함께 넘겨줍니다.
         // MocPlugin.getInstance()를 통해 현재 켜져 있는 플러그인을 찾고,
@@ -23,7 +24,8 @@ public class MocCommand implements CommandExecutor {
         GameManager gm = GameManager.getInstance(MocPlugin.getInstance());
 
         // 3. 만약 '/moc'만 치고 뒤에 아무것도 안 적었다면 명령어를 종료합니다.
-        if (args.length == 0) return false;
+        if (args.length == 0)
+            return false;
 
         // 4. '/moc [명령어]' 에서 [명령어] 부분이 무엇인지에 따라 동작을 나눕니다.
         switch (args[0].toLowerCase()) {
@@ -68,6 +70,22 @@ public class MocCommand implements CommandExecutor {
                 }
                 gm.toggleAfk(args[1]); // 해당 플레이어를 게임 참가 대상에서 제외하거나 다시 넣습니다.
                 p.sendMessage("§e[MOC] §f" + args[1] + "님의 참가 상태를 변경했습니다.");
+                return true;
+            }
+
+            case "set" -> { // 능력 강제 설정 (/moc set [닉네임] [능력])
+                if (!p.isOp()) {
+                    p.sendMessage("§c권한이 없습니다.");
+                    return true;
+                }
+                if (args.length < 3) {
+                    p.sendMessage("§c사용법: /moc set [플레이어이름] [능력]");
+                    return true;
+                }
+                // 새로 만든 AbilityAssigner를 씁니다.
+                // AbilityAssigner가 static 메서드이므로 바로 호출합니다.
+                String result = me.user.moc.ability.test.AbilityAssigner.assignAbility(args[1], args[2]);
+                p.sendMessage(result);
                 return true;
             }
         }

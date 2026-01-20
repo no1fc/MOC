@@ -31,8 +31,8 @@ public class GameManager implements Listener {
     private final ConfigManager config = ConfigManager.getInstance(); // 콘피그 싱글톤
     // 데이터 관리
     private final Map<UUID, Integer> scores = new HashMap<>(); // 점수판
-    private final Set<String> afkPlayers = new HashSet<>();    // 잠수 유저(닉네임)
-    private final Set<UUID> readyPlayers = new HashSet<>();    // 준비 완료(/moc yes) 유저
+    private final Set<String> afkPlayers = new HashSet<>(); // 잠수 유저(닉네임)
+    private final Set<UUID> readyPlayers = new HashSet<>(); // 준비 완료(/moc yes) 유저
     private AbilityManager abilityManager; // 의존성 주입
     // 게임 상태 변수
     private boolean isRunning = false;
@@ -40,7 +40,7 @@ public class GameManager implements Listener {
     private int round = 0;
     // 태스크 관리 (타이머)
     private BukkitTask selectionTask; // 능력 추첨 타이머
-    private BukkitTask battleTask;    // 전투 관련 타이머
+    private BukkitTask battleTask; // 전투 관련 타이머
 
     public GameManager(MocPlugin plugin, ArenaManager arenaManager) {
         this.plugin = plugin;
@@ -84,7 +84,8 @@ public class GameManager implements Listener {
         // 스폰 좌표 확인
         Location spawn = config.spawn_point != null ? config.spawn_point : starter.getLocation();
         // 만약 콘피그에 스폰이 없으면 시작한 사람 위치를 임시 스폰으로 잡음
-        if (config.spawn_point == null) config.spawn_point = spawn;
+        if (config.spawn_point == null)
+            config.spawn_point = spawn;
 
         Bukkit.broadcastMessage("§f스폰 위치 : " + spawn.getBlockX() + ", " + spawn.getBlockY() + ", " + spawn.getBlockZ());
         Bukkit.broadcastMessage("§f게임 모드 : 개인전");
@@ -108,13 +109,15 @@ public class GameManager implements Listener {
         readyPlayers.clear();
 
         // AbilityManager에게 능력 초기화 요청 (리롤 횟수 등 리셋)
-        if (abilityManager != null) abilityManager.resetAbilities();
+        if (abilityManager != null)
+            abilityManager.resetAbilities();
 
         Bukkit.broadcastMessage("§a§l=== " + round + "라운드 시작! ===");
 
         // 2-1. 맵 및 플레이어 상태 초기화
         Location center = config.spawn_point;
-        if (center == null) center = Bukkit.getOnlinePlayers().iterator().next().getLocation();
+        if (center == null)
+            center = Bukkit.getOnlinePlayers().iterator().next().getLocation();
 
         // 월드 청소 (떨어진 아이템, 몬스터 삭제)
         World world = center.getWorld();
@@ -138,14 +141,16 @@ public class GameManager implements Listener {
         int deckIndex = 0;
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (afkPlayers.contains(p.getName())) continue;
+            if (afkPlayers.contains(p.getName()))
+                continue;
 
             // 상태 리셋
             p.setGameMode(GameMode.SURVIVAL);
             p.getInventory().clear();
             p.setHealth(20);
             p.setFoodLevel(20);
-            for (PotionEffect effect : p.getActivePotionEffects()) p.removePotionEffect(effect.getType());
+            for (PotionEffect effect : p.getActivePotionEffects())
+                p.removePotionEffect(effect.getType());
 
             // 능력 배정 (AbilityManager 연동)
             String abilityName = deck.get(deckIndex % deck.size());
@@ -166,7 +171,8 @@ public class GameManager implements Listener {
         }
 
         // 2-2. 능력 추첨 시간 (콘피그 start_time 초)
-        if (selectionTask != null) selectionTask.cancel();
+        if (selectionTask != null)
+            selectionTask.cancel();
         selectionTask = new BukkitRunnable() {
             int timeLeft = config.start_time;
 
@@ -201,11 +207,13 @@ public class GameManager implements Listener {
         Bukkit.broadcastMessage("§6모든 플레이어가 준비되었습니다. 전장으로 이동합니다!");
 
         Location spawn = config.spawn_point;
-        if (spawn == null) spawn = Bukkit.getOnlinePlayers().iterator().next().getLocation();
+        if (spawn == null)
+            spawn = Bukkit.getOnlinePlayers().iterator().next().getLocation();
 
         // 3-1. 랜덤 좌표 텔레포트
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (afkPlayers.contains(p.getName())) continue;
+            if (afkPlayers.contains(p.getName()))
+                continue;
 
             // 스폰 포인트 주변 랜덤 산개
             double rx = (Math.random() * 20) - 10;
@@ -249,14 +257,16 @@ public class GameManager implements Listener {
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1f, 1f);
 
-            if (afkPlayers.contains(p.getName())) continue;
+            if (afkPlayers.contains(p.getName()))
+                continue;
 
             // 4-1. 아이템 지급 (칼-고기-물-유리-포션-갑옷-능력템)
             giveBattleItems(p);
 
             // 4-2. 체력 3줄(60) 설정
             AttributeInstance maxHealth = p.getAttribute(Attribute.MAX_HEALTH);
-            if (maxHealth != null) maxHealth.setBaseValue(60.0);
+            if (maxHealth != null)
+                maxHealth.setBaseValue(60.0);
             p.setHealth(60.0);
         }
 
@@ -265,7 +275,8 @@ public class GameManager implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    if (!isRunning) return;
+                    if (!isRunning)
+                        return;
                     Bukkit.broadcastMessage("§4§l[경고] §c자기장이 줄어들기 시작합니다!");
                     for (Player p : Bukkit.getOnlinePlayers()) {
                         p.playSound(p.getLocation(), Sound.ITEM_GOAT_HORN_SOUND_0, 1f, 1f);
@@ -326,7 +337,8 @@ public class GameManager implements Listener {
         }
 
         isRunning = false;
-        if (selectionTask != null) selectionTask.cancel();
+        if (selectionTask != null)
+            selectionTask.cancel();
         arenaManager.stopTasks(); // 자기장 등 정지
 
         // 점수 내림차순 정렬 및 출력
@@ -336,7 +348,8 @@ public class GameManager implements Listener {
         Bukkit.broadcastMessage("§b=== 게임 종료! ===");
         if (!sortedScores.isEmpty()) {
             Map.Entry<UUID, Integer> first = sortedScores.get(0);
-            Bukkit.broadcastMessage("§e1등 : " + Bukkit.getOfflinePlayer(first.getKey()).getName() + " [" + first.getValue() + "점]");
+            Bukkit.broadcastMessage(
+                    "§e1등 : " + Bukkit.getOfflinePlayer(first.getKey()).getName() + " [" + first.getValue() + "점]");
 
             // 1등 축하 폭죽
             Player winner = Bukkit.getPlayer(first.getKey());
@@ -347,11 +360,13 @@ public class GameManager implements Listener {
 
         if (sortedScores.size() > 1) {
             Map.Entry<UUID, Integer> second = sortedScores.get(1);
-            Bukkit.broadcastMessage("§72등 : " + Bukkit.getOfflinePlayer(second.getKey()).getName() + " [" + second.getValue() + "점]");
+            Bukkit.broadcastMessage(
+                    "§72등 : " + Bukkit.getOfflinePlayer(second.getKey()).getName() + " [" + second.getValue() + "점]");
         }
         if (sortedScores.size() > 2) {
             Map.Entry<UUID, Integer> third = sortedScores.get(2);
-            Bukkit.broadcastMessage("§63등 : " + Bukkit.getOfflinePlayer(third.getKey()).getName() + " [" + third.getValue() + "점]");
+            Bukkit.broadcastMessage(
+                    "§63등 : " + Bukkit.getOfflinePlayer(third.getKey()).getName() + " [" + third.getValue() + "점]");
         }
         Bukkit.broadcastMessage("§d✿ 고생하셨습니다! ✿");
 
@@ -360,7 +375,8 @@ public class GameManager implements Listener {
             p.setGameMode(GameMode.SURVIVAL);
             p.getInventory().clear();
             AttributeInstance maxHealth = p.getAttribute(Attribute.MAX_HEALTH);
-            if (maxHealth != null) maxHealth.setBaseValue(20.0);
+            if (maxHealth != null)
+                maxHealth.setBaseValue(20.0);
             p.setHealth(20.0);
         }
     }
@@ -368,7 +384,8 @@ public class GameManager implements Listener {
     // 사망 이벤트 핸들러 (점수 계산)
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
-        if (!isRunning) return;
+        if (!isRunning)
+            return;
 
         Player victim = e.getEntity();
         Player killer = victim.getKiller();
@@ -385,7 +402,8 @@ public class GameManager implements Listener {
 
         // 생존자 체크 (스펙테이터가 아닌 사람)
         List<Player> survivors = Bukkit.getOnlinePlayers().stream()
-                .filter(p -> p.getGameMode() == GameMode.SURVIVAL && !afkPlayers.contains(p.getName()) && !p.equals(victim))
+                .filter(p -> p.getGameMode() == GameMode.SURVIVAL && !afkPlayers.contains(p.getName())
+                        && !p.equals(victim))
                 .collect(Collectors.toList());
 
         // 최후의 1인 확인
@@ -456,16 +474,18 @@ public class GameManager implements Listener {
     // 핫바 0번 슬롯 고정 (요청하신 기능)
     @EventHandler
     public void onSlotChange(PlayerItemHeldEvent e) {
-//        if (isRunning && !isInvincible) { // 전투 중일 때만
-//            // 핫바를 1칸으로 변경하는 효과
-//            e.getPlayer().getInventory().setHeldItemSlot(0);
-//        }
+        // if (isRunning && !isInvincible) { // 전투 중일 때만
+        // // 핫바를 1칸으로 변경하는 효과
+        // e.getPlayer().getInventory().setHeldItemSlot(0);
+        // }
     }
 
     // AFK 관리 메소드 (커맨드에서 호출)
     public void toggleAfk(String name) {
-        if (afkPlayers.contains(name)) afkPlayers.remove(name);
-        else afkPlayers.add(name);
+        if (afkPlayers.contains(name))
+            afkPlayers.remove(name);
+        else
+            afkPlayers.add(name);
     }
 
     // Yes, Re, Check 등은 AbilityManager로 위임하거나 여기서 처리
@@ -477,15 +497,15 @@ public class GameManager implements Listener {
     }
 
     public void playerReroll(Player p) {
-        if (abilityManager != null) abilityManager.rerollAbility(p);
+        if (abilityManager != null)
+            abilityManager.rerollAbility(p);
     }
 
     public void showAbilityDetail(Player p) {
         // AbilityManager에게 현재 플레이어의 능력을 물어봐서 출력
         // (현재 구조상 AbilityManager가 담당하는게 맞음)
-        // 임시로 메시지 띄우기
         if (abilityManager != null) {
-            // abilityManager.showAbilityDetail(p); // 이 메소드가 있다면 호출
+            abilityManager.showAbilityDetail(p);
         }
     }
 
@@ -493,7 +513,8 @@ public class GameManager implements Listener {
         // 승리 축하 폭죽 로직 (생략 가능, 단순화)
         org.bukkit.entity.Firework fw = loc.getWorld().spawn(loc, org.bukkit.entity.Firework.class);
         org.bukkit.inventory.meta.FireworkMeta fm = fw.getFireworkMeta();
-        fm.addEffect(FireworkEffect.builder().withColor(Color.RED).withFade(Color.ORANGE).with(FireworkEffect.Type.BALL).build());
+        fm.addEffect(FireworkEffect.builder().withColor(Color.RED).withFade(Color.ORANGE).with(FireworkEffect.Type.BALL)
+                .build());
         fm.setPower(1);
         fw.setFireworkMeta(fm);
     }
