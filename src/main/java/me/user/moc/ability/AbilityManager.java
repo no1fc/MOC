@@ -5,106 +5,171 @@ import me.user.moc.ability.impl.Magnus;
 import me.user.moc.ability.impl.Midas;
 import me.user.moc.ability.impl.Olaf;
 import me.user.moc.ability.impl.Ueki;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
+/**
+ * AbilityManager: 게임 내 모든 '능력'을 관리하는 클래스입니다.
+ * 플레이어에게 능력을 배정하고, 리롤을 처리하며, 능력 정보를 보여주는 역할을 합니다.
+ */
 public class AbilityManager {
+
     private final MocPlugin plugin;
+    // 능력 이름(String)을 통해 실제 능력 객체(Ability)를 찾기 위한 지도(Map)
     private final Map<String, Ability> abilities = new HashMap<>();
+    // 어떤 플레이어(UUID)가 어떤 능력 이름(String)을 가지고 있는지 저장하는 지도
     private final Map<UUID, String> playerAbilities = new HashMap<>();
+    // 플레이어별로 남은 리롤 횟수를 저장하는 지도
     private final Map<UUID, Integer> rerollCounts = new HashMap<>();
 
     public AbilityManager(MocPlugin plugin) {
         this.plugin = plugin;
-        registerAbilities();
+        registerAbilities(); // 클래스가 생성될 때 능력을 자동으로 등록합니다.
     }
 
+    /**
+     * 사용할 능력들을 시스템에 등록하는 메서드입니다.
+     */
     private void registerAbilities() {
-        // 능력 등록
-        addAbility(new Ueki(plugin));
-        addAbility(new Olaf(plugin));
-        addAbility(new Midas(plugin));
-        addAbility(new Magnus(plugin));
+        addAbility(new Ueki(plugin));   // 우에키 등록
+        addAbility(new Olaf(plugin));   // 올라프 등록
+        addAbility(new Midas(plugin));  // 미다스 등록
+        addAbility(new Magnus(plugin)); // 매그너스 등록
     }
 
     private void addAbility(Ability ability) {
         abilities.put(ability.getName(), ability);
     }
 
+    /**
+     * [빌드 에러 해결 포인트]
+     * Magnus나 Midas 같은 개별 능력 파일에서 "이 플레이어가 내 능력자인가?"를 확인할 때 사용합니다.
+     */
+    public boolean hasAbility(Player player, String abilityName) {
+        String assigned = playerAbilities.get(player.getUniqueId());
+        // 배정된 능력이 있고, 그 이름이 확인하려는 능력 이름과 같으면 true(참) 반환
+        return assigned != null && assigned.equals(abilityName);
+    }
+
+    /**
+     * 새로운 라운드가 시작될 때 기존 데이터(배정된 능력, 리롤 횟수)를 싹 비웁니다.
+     */
     public void resetAbilities() {
         playerAbilities.clear();
         rerollCounts.clear();
     }
 
-    public void distributeAbilities() {
-        List<String> abilityNames = new ArrayList<>(abilities.keySet());
-        Collections.shuffle(abilityNames);
-
-        int i = 0;
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            String initialAbility = abilityNames.get(i % abilityNames.size());
-            playerAbilities.put(p.getUniqueId(), initialAbility);
-            rerollCounts.put(p.getUniqueId(), 2);
-            showAbilityInfo(p, initialAbility);
-            i++;
-        }
+    // GameManager에서 플레이어에게 능력을 강제로 설정할 때 사용합니다.
+    public void setPlayerAbility(UUID uuid, String abilityName) {
+        playerAbilities.put(uuid, abilityName);
     }
 
+    // GameManager에서 설정값(Config)에 따라 리롤 횟수를 부여할 때 사용합니다.
+    public void setRerollCount(UUID uuid, int count) {
+        rerollCounts.put(uuid, count);
+    }
+
+    /**
+     * 플레이어에게 배정된 능력의 요약 정보를 채팅창에 예쁘게 보여줍니다.
+     */
     public void showAbilityInfo(Player p, String abilityName) {
-        Ability ability = abilities.get(abilityName);
-        if (ability == null) return;
+        p.sendMessage("§f ");
+        p.sendMessage("§e=== 당신의 능력은 ===");
+
+        // 능력 이름에 따라 서로 다른 설명을 출력합니다.
+        switch (abilityName) {
+            case "우에키" -> {
+                p.sendMessage("§a유틸 ● 우에키(우에키의 법칙/배틀짱)");
+                p.sendMessage("§f묘목을 우클릭 시 주변에 떨어진 쓰레기들을 전부 나무로 변경한다.");
+            }
+            case "올라프" -> {
+                p.sendMessage("§c공격 ● 올라프(리그 오브 레전드)");
+                p.sendMessage("§f도끼(눈덩이)를 던져 적에게 강력한 고정 피해를 입힌다.");
+            }
+            case "미다스" -> {
+                p.sendMessage("§6특수 ● 미다스(그리스 신화)");
+                p.sendMessage("§f금괴로 블록을 우클릭하면 황금 블록으로 변환시킨다.");
+            }
+            case "매그너스" -> {
+                p.sendMessage("§b이동 ● 매그너스(이터널 리턴)");
+                p.sendMessage("§f오토바이를 소환하여 전방으로 돌진 후 자폭한다.");
+            }
+            default -> p.sendMessage("§7등록되지 않은 능력입니다.");
+        }
 
         p.sendMessage("§f ");
-        p.sendMessage("§e=== §l능력 정보 §e===");
-        p.sendMessage("§b" + ability.getName());
-        for (String line : ability.getDescription()) {
-            p.sendMessage(line);
-        }
-        p.sendMessage("§f ");
-        p.sendMessage("§e능력 수락 : §a/moc yes");
-        p.sendMessage("§e리롤(2회) : §c/moc re §7(소고기 15개 소모)");
+        p.sendMessage("§f상세 설명 : §b/moc check");
+        p.sendMessage("§f능력 수락 : §a/moc yes");
+
+        // 남은 리롤 횟수를 가져와서 보여줍니다.
+        int left = rerollCounts.getOrDefault(p.getUniqueId(), 0);
+        p.sendMessage("§f리롤(" + left + "회) : §c/moc re");
         p.sendMessage("§e==================");
     }
 
+    /**
+     * 리롤 로직: 현재 능력을 버리고 새로운 능력을 뽑습니다. (고기 소모 없음)
+     */
     public void rerollAbility(Player p) {
         int left = rerollCounts.getOrDefault(p.getUniqueId(), 0);
+
+        // 1. 리롤 횟수가 0이면 거절합니다.
         if (left <= 0) {
             p.sendMessage("§c[MOC] 리롤 횟수를 모두 사용했습니다.");
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
             return;
         }
 
-        if (!p.getInventory().contains(Material.COOKED_BEEF, 15)) {
-            p.sendMessage("§c[MOC] 소고기가 부족하여 리롤할 수 없습니다.");
-            return;
-        }
-
-        p.getInventory().removeItem(new ItemStack(Material.COOKED_BEEF, 15));
-        
+        // 2. 현재 능력을 제외한 나머지 능력 중에서 하나를 랜덤으로 뽑습니다.
         List<String> pool = new ArrayList<>(abilities.keySet());
-        String newAbility = pool.get(new Random().nextInt(pool.size()));
+        pool.remove(playerAbilities.get(p.getUniqueId()));
 
+        if (pool.isEmpty()) return;
+
+        Collections.shuffle(pool); // 목록을 섞습니다.
+        String newAbility = pool.get(0); // 맨 앞의 것을 선택합니다.
+
+        // 3. 새로운 능력을 저장하고 리롤 횟수를 1 차감합니다.
         playerAbilities.put(p.getUniqueId(), newAbility);
         rerollCounts.put(p.getUniqueId(), left - 1);
-        p.sendMessage("§e[MOC] §f능력이 교체되었습니다! 남은 리롤: §c" + (left - 1));
+
+        // 4. 효과음과 함께 새로운 정보를 보여줍니다.
+        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 2f);
         showAbilityInfo(p, newAbility);
     }
 
+    /**
+     * 전투 시작 시 각 능력에 맞는 고유 아이템을 지급합니다.
+     */
     public void giveAbilityItems(Player p) {
-        String abilityName = playerAbilities.get(p.getUniqueId());
-        if (abilityName != null) {
-            Ability ability = abilities.get(abilityName);
-            if (ability != null) {
-                ability.giveItem(p);
-            }
+        String name = playerAbilities.get(p.getUniqueId());
+        if (name != null && abilities.containsKey(name)) {
+            // Ability 클래스(Ueki.java 등)에 정의된 giveItem 메서드를 실행합니다.
+            abilities.get(name).giveItem(p);
         }
     }
-    
-    // 능력 이름으로 플레이어가 해당 능력을 가졌는지 확인
-    public boolean hasAbility(Player p, String abilityName) {
-        return abilityName.equals(playerAbilities.get(p.getUniqueId()));
+
+    /**
+     * /moc check 입력 시 보여줄 상세 가이드입니다.
+     */
+    public void showAbilityDetail(Player p) {
+        String abilityName = playerAbilities.get(p.getUniqueId());
+        if (abilityName == null) {
+            p.sendMessage("§c배정된 능력이 없습니다.");
+            return;
+        }
+
+        p.sendMessage("§e=== 상세 설명 ===");
+        if (abilityName.equals("우에키")) {
+            p.sendMessage("§a유틸 ● 우에키(우에키의 법칙/배틀짱)");
+            p.sendMessage("§f묘목을 우클릭 하면 주변 20블럭 이내 모든 생명체와");
+            p.sendMessage("§f바닥에 떨어진 아이템들이 나무로 변합니다.");
+            p.sendMessage("§a추가 아이템: 묘목 64개.");
+        } else {
+            p.sendMessage("§7현재 [" + abilityName + "]의 상세 가이드가 작성 중입니다.");
+        }
+        p.sendMessage("§e=================");
     }
 }
