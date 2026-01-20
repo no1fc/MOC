@@ -4,6 +4,8 @@ import me.user.moc.MocPlugin;
 import me.user.moc.ability.impl.Magnus;
 import me.user.moc.ability.impl.Midas;
 import me.user.moc.ability.impl.Olaf;
+import me.user.moc.ability.impl.Rammus;
+import me.user.moc.ability.impl.Saitama;
 import me.user.moc.ability.impl.Ueki;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -33,10 +35,12 @@ public class AbilityManager {
      * 사용할 능력들을 시스템에 등록하는 메서드입니다.
      */
     private void registerAbilities() {
-        addAbility(new Ueki(plugin));   // 우에키 등록
-        addAbility(new Olaf(plugin));   // 올라프 등록
-        addAbility(new Midas(plugin));  // 미다스 등록
+        addAbility(new Ueki(plugin)); // 우에키 등록
+        addAbility(new Olaf(plugin)); // 올라프 등록
+        addAbility(new Midas(plugin)); // 미다스 등록
         addAbility(new Magnus(plugin)); // 매그너스 등록
+        addAbility(new Rammus(plugin)); // 람머스 등록
+        addAbility(new Saitama(plugin)); // 사이타마 등록
     }
 
     private void addAbility(Ability ability) {
@@ -96,6 +100,15 @@ public class AbilityManager {
                 p.sendMessage("§b이동 ● 매그너스(이터널 리턴)");
                 p.sendMessage("§f오토바이를 소환하여 전방으로 돌진 후 자폭한다.");
             }
+            case "람머스" -> {
+                p.sendMessage("§a전투 ● 람머스(롤)");
+                p.sendMessage("§f거북이 모자를 착용하여 몸 말아 웅크리기를 시전합니다.");
+            }
+            case "사이타마" -> {
+                p.sendMessage("§c전투 ● 사이타마(원펀맨)");
+                p.sendMessage("§f사이타마 운동법을 완료하면 매우 강력해집니다.");
+            }
+
             default -> p.sendMessage("§7등록되지 않은 능력입니다.");
         }
 
@@ -126,7 +139,8 @@ public class AbilityManager {
         List<String> pool = new ArrayList<>(abilities.keySet());
         pool.remove(playerAbilities.get(p.getUniqueId()));
 
-        if (pool.isEmpty()) return;
+        if (pool.isEmpty())
+            return;
 
         Collections.shuffle(pool); // 목록을 섞습니다.
         String newAbility = pool.get(0); // 맨 앞의 것을 선택합니다.
@@ -167,6 +181,18 @@ public class AbilityManager {
             p.sendMessage("§f묘목을 우클릭 하면 주변 20블럭 이내 모든 생명체와");
             p.sendMessage("§f바닥에 떨어진 아이템들이 나무로 변합니다.");
             p.sendMessage("§a추가 아이템: 묘목 64개.");
+        } else if (abilityName.equals("람머스")) {
+            p.sendMessage("§a전투 ● 람머스(롤)");
+            p.sendMessage("§f거북이 모자를 착용하여 몸 말아 웅크리기를 시전합니다.");
+            p.sendMessage("§f - 모자 착용 시 구속2");
+            p.sendMessage("§f - 모자 미착용 시 풀림");
+            p.sendMessage("§a추가 아이템: 거북이 모자 (가시 8)");
+        } else if (abilityName.equals("사이타마")) {
+            p.sendMessage("§c전투 ● 사이타마(원펀맨)");
+            p.sendMessage("§f사이타마 운동법을 완료하면 매우 강력해집니다.");
+            p.sendMessage("§f[조건] 웅크리기 500회 / 점프 500회 / 이동 500블럭");
+            p.sendMessage("§f[보상] 힘V, 이속V, 저항V, 성급함V (영구)");
+
         } else {
             p.sendMessage("§7현재 [" + abilityName + "]의 상세 가이드가 작성 중입니다.");
         }
