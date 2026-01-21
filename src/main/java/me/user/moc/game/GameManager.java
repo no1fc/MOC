@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 
 public class GameManager implements Listener {
 
+    private ConfigManager configManager;
     private final MocPlugin plugin;
     private final ArenaManager arenaManager;
-    private final ConfigManager configManager;
     // 데이터 관리
     // 플레이어 점수 저장소 (UUID, 점수)
     private final Map<UUID, Integer> scores = new HashMap<>(); // 점수판
@@ -50,10 +50,22 @@ public class GameManager implements Listener {
     public GameManager(MocPlugin plugin, ArenaManager arenaManager) {
         this.plugin = plugin;
         this.arenaManager = arenaManager;
-        this.plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        this.configManager = plugin.getConfigManager();
-    }
+        // [중요!] 여기서 장부를 가져올 때, 메인 플러그인에 있는 걸 직접 가져옵니다.
+        // 만약 메인에 없다면(null), 설정 매니저에서 직접 '가져오기 버튼'을 누릅니다.
+        this.configManager = (plugin.getConfigManager() != null)
+                ? plugin.getConfigManager()
+                : ConfigManager.getInstance();
 
+        this.plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        // [추가] 로그를 남겨서 장부가 잘 들어왔는지 확인합니다.
+        if (this.configManager == null) {
+            plugin.getLogger().warning("!!! [경고] GameManager가 설정 장부를 찾지 못했습니다 !!!");
+        }
+    }
+    /**
+     * [수정 포인트 1] 이 함수가 실행될 때 장부(ConfigManager)를
+     * 확실하게 챙기도록 고쳤습니다.
+     */
     public static GameManager getInstance(MocPlugin plugin) {
         return plugin.getGameManager(); // 메인 클래스를 통해 가져오거나 싱글톤 패턴 적용 가능
     }
@@ -67,6 +79,10 @@ public class GameManager implements Listener {
     // 1. 게임 시작 단계 (/moc start)
     // =========================================================================
     public void startGame(Player starter) {
+        // [안전장치] 만약 게임 시작 직전에 장부가 비어있다면, 여기서 마지막으로 한 번 더 챙깁니다.
+        if (this.configManager == null) {
+            this.configManager = ConfigManager.getInstance();
+        }
         if (isRunning) {
             starter.sendMessage("§c이미 게임이 진행 중입니다.");
             return;
@@ -148,7 +164,7 @@ public class GameManager implements Listener {
 
         // 플레이어 초기화 및 능력 배정
         // (중복 안 나오게 셔플)
-        List<String> deck = new ArrayList<>(Arrays.asList("우에키", "올라프", "미다스", "매그너스"));
+        List<String> deck = new ArrayList<>(Arrays.asList("001", "002", "003", "004"));
         Collections.shuffle(deck);
         int deckIndex = 0;
 
@@ -165,19 +181,19 @@ public class GameManager implements Listener {
                 p.removePotionEffect(effect.getType());
 
             // 능력 배정 (AbilityManager 연동)
-            String abilityName = deck.get(deckIndex % deck.size());
+            String abilityCode = deck.get(deckIndex % deck.size());
             if (abilityManager != null) {
                 // AbilityManager에 '이 유저는 이 능력이다'라고 설정하는 메소드가 있다고 가정하거나
                 // AbilityManager가 public map을 가지고 있다면 직접 put
                 // 여기서는 AbilityManager에 setPlayerAbility 메소드를 추가했다고 가정합니다.
                 // 만약 없다면 AbilityManager.java에 추가가 필요합니다!
-                abilityManager.setPlayerAbility(p.getUniqueId(), abilityName);
+                abilityManager.setPlayerAbility(p.getUniqueId(), abilityCode);
 
                 // 리롤 횟수 설정 (콘피그 값)
                 abilityManager.setRerollCount(p.getUniqueId(), configManager.re_point);
 
                 // 설명 메세지 출력 (AbilityManager가 담당)
-                abilityManager.showAbilityInfo(p, abilityName);
+                abilityManager.showAbilityInfo(p, abilityCode);
             }
             deckIndex++;
         }
