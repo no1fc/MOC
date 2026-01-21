@@ -1,73 +1,99 @@
+// 파일 경로: src/main/java/me/user/moc/game/ArenaManager.java
 package me.user.moc.game;
 
 import me.user.moc.MocPlugin;
 import me.user.moc.config.ConfigManager;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 public class ArenaManager {
     private final MocPlugin plugin;
-    private final ConfigManager config = ConfigManager.getInstance(); // 콘피그 싱글톤
+    private final ConfigManager config = ConfigManager.getInstance();
+    private final ClearManager clearManager;
     private Location gameCenter;
     private BukkitTask borderShrinkTask;
     private BukkitTask borderDamageTask;
 
     public ArenaManager(MocPlugin plugin) {
         this.plugin = plugin;
-    }
-
-    public Location getGameCenter() {
-        return gameCenter;
-    }
-
-    public void setGameCenter(Location center) {
-        this.gameCenter = center;
+        this.clearManager = new ClearManager(plugin);
     }
 
     /**
-     * 경기장 바닥을 생성하고 플레이어들을 텔레포트시킵니다.
-     *
-     * @param center  경기장 중심
-     * @param radius  반지름
-     * @param targetY 바닥 높이
+     * [핵심] 전장을 생성하고 환경을 초기화합니다.
      */
-    public void generateCircleFloor(Location center, int radius, int targetY) {
+    public void prepareArena(Location center) {
+        this.gameCenter = center;
         World world = center.getWorld();
+        if (world == null) return;
+
+        // 1. [환경] 날씨 맑음, 시간 낮(1000)
+        world.setStorm(false);
+        world.setThundering(false);
+        world.setTime(1000L);
+
+        // 2. [자기장] 기존 작업 종료 후, 설정값보다 2칸 작게 초기화
+        stopTasks();
+        world.getWorldBorder().setCenter(center);
+        world.getWorldBorder().setSize(config.map_size - 2);
+
+        // 3. [건축] 기반암 바닥 생성 시작 + 아이템 청소 + 몬스터 청소.
+        // 특정 좌표기준으로 , 어느 높이에 설정할지 하는 함수.
+        generateSquareFloor(center, center.getBlockY() - 1);
+    }
+
+    /**
+     * [전장 바닥 설정 기능 - 정사각형 버전]
+     * 기반암 바닥을 사각형으로 깔고 위아래를 청소한 뒤, 중앙에 에메랄드를 설치합니다.
+     */
+    public void generateSquareFloor(Location center, int targetY) {
+        this.gameCenter = center;
+        World world = center.getWorld();
+        if (world == null) return;
+
+        // 1. 범위 계산 (map_size가 75라면 중심에서 양옆으로 37칸씩)
+        int halfSize = config.map_size / 2;
+
         int cx = center.getBlockX();
         int cz = center.getBlockZ();
-        long radiusSq = (long) radius * radius;
-
-        // 텔레포트 목적지 (중심)
-        Location teleportDest = center.clone();
 
         new BukkitRunnable() {
-            int x = cx - radius;
+            // 시작 지점: 중심에서 -halfSize 만큼 떨어진 곳
+            int x = cx - halfSize;
 
             @Override
             public void run() {
+                // 서버 렉 방지를 위해 한 번에 20줄씩 공사
                 for (int i = 0; i < 20; i++) {
-                    if (x > cx + radius) {
-                        // 생성 완료 후 아이템 제거 및 플레이어 텔레포트
-                        world.getEntitiesByClass(Item.class).forEach(Entity::remove);
-                        Bukkit.getOnlinePlayers().forEach(p -> p.teleport(teleportDest.clone().add(0.5, 1.0, 0.5)));
+                    // 모든 X축 범위 공사가 끝났다면 (중심 + halfSize를 넘었을 때)
+                    if (x > cx + halfSize) {
+                        // 2. [완성] 기반암 작업 완료 후 중앙에 에메랄드 설치
+                        center.getBlock().setType(Material.EMERALD_BLOCK);
+                        // 아이템, 몹 다 정리.
+                        clearManager.allCear();
+
+                        // 플레이어들을 에메랄드 위로 소환
+                        if(config.spawn_tf){
+                            Bukkit.getOnlinePlayers().forEach(p -> p.teleport(center.clone().add(0.5, 1.0, 0.5)));
+                        }
                         this.cancel();
                         return;
                     }
-                    long dx = (long) (x - cx) * (x - cx);
-                    for (int z = cz - radius; z <= cz + radius; z++) {
-                        if (dx + (long) (z - cz) * (z - cz) <= radiusSq) {
-                            for (int y = world.getMinHeight(); y < world.getMaxHeight(); y++) {
-                                Block b = world.getBlockAt(x, y, z);
-                                if (y == targetY) {
-                                    // 텔레포트 위치의 바로 아래(바닥)은 비우지 않음 (혹시 모를 안전장치)
-                                    // 원본 코드에서도 비슷하게 동작했으나, 여기서는 단순화하여 바닥 생성
-                                    b.setType(Material.BEDROCK, false);
-                                } else if (b.getType() != Material.AIR) {
+
+                    // Z축 공사 (원형 체크 로직 삭제 -> 사각형으로 일괄 처리)
+                    for (int z = cz - halfSize; z <= cz + halfSize; z++) {
+                        // 3. [청소 및 건설] 해당 좌표의 하늘부터 땅끝까지
+                        for (int y = world.getMinHeight(); y < world.getMaxHeight(); y++) {
+                            Block b = world.getBlockAt(x, y, z);
+                            if (y == targetY) {
+                                // 기반암 설치
+                                b.setType(Material.BEDROCK, false);
+                            } else {
+                                // 기반암 위아래는 공기로 싹 비우기
+                                if (b.getType() != Material.AIR) {
                                     b.setType(Material.AIR, false);
                                 }
                             }
@@ -80,53 +106,33 @@ public class ArenaManager {
     }
 
     /**
-     * 자기장 축소를 시작합니다.
+     * 자기장 멈추기 및
      */
+    public void stopTasks() {
+        if (borderShrinkTask != null) borderShrinkTask.cancel();
+        if (borderDamageTask != null) borderDamageTask.cancel();
+        borderShrinkTask = null;
+        borderDamageTask = null;
+    }
+
     /**
-     * 자기장 축소를 시작합니다.
-     * 주기적으로 방벽의 크기를 줄여서 플레이어들을 중앙으로 몰아넣습니다.
+     * 자기장 좁아지기
      */
     public void startBorderShrink() {
-        // 1. 게임의 중심 좌표(gameCenter)가 설정되어 있지 않으면 실행하지 않고 돌아갑니다.
         if (gameCenter == null) return;
+        stopTasks(); // 중복 방지
 
-        // 2. 게임이 진행 중인 월드(세계) 정보를 가져옵니다.
-        World world = gameCenter.getWorld();
-
-        // 3. 주기적으로 실행될 '반복 작업'을 만듭니다. (컴퓨터에게 시키는 알람 같은 것)
         borderShrinkTask = new BukkitRunnable() {
             @Override
             public void run() {
-//                // 4. 현재 이 월드에 설정된 장벽(방벽)의 실제 크기를 가져옵니다.
-//                double size = world.getWorldBorder().getSize();
-//                // 5. 만약 장벽 크기가 1칸 이하로 줄어들었다면, 더 이상 줄일 수 없으므로 작업을 멈춥니다.
-//                if (size <= 1) {
-//                    this.cancel(); // 반복 작업을 종료합니다.
-//                    return;
-//                }
-//                // 6. [핵심 로직] 장벽의 크기를 현재보다 2칸 줄입니다.
-//                // 첫 번째 인자(size - 2) : 변경될 목표 크기 (현재 크기에서 2만큼 뺀 값)
-//                // 두 번째 인자(1) : 크기가 줄어드는 데 걸리는 시간 (1초 동안 서서히 줄어듦)
-//                world.getWorldBorder().setSize(size - 2, 1);
-
-                // ArenaManager에게 자기장 수축 명령
-                if (config.spawn_point != null) {
-                    // 5초에 걸쳐 줄어들거나 천천히 줄어들게 설정
-                    // 여기서는 예시로 월드보더를 사용
-                    WorldBorder wb = config.spawn_point.getWorld().getWorldBorder();
-                    wb.setCenter(config.spawn_point);
-                    wb.setSize(config.map_size); // 초기 크기
-                    // [수정된 코드] 다시 long 타입을 사용합니다.
-                    // 120L은 120초를 의미합니다.
-                    wb.setSize(10, 120); // 120초 동안 10칸 크기로 서서히 줄어듭니다.
+                double size = gameCenter.getWorld().getWorldBorder().getSize();
+                if (size <= 5) {
+                    this.cancel();
+                    return;
                 }
+                gameCenter.getWorld().getWorldBorder().setSize(size - 2, 1);
             }
-
-            // 7. 이 작업을 언제 얼마나 자주 실행할지 정합니다.
-            // runTaskTimer(플러그인, 시작지연시간, 반복주기)
-            // 0 : 명령을 내리자마자 바로 시작합니다.
-            // 10초 : ( 마인크래프트 시간으로 20틱 = 1초)마다 위 작업을 반복합니다.
-        }.runTaskTimer(plugin, 0, 200L);
+        }.runTaskTimer(plugin, 0, 60L);
     }
 
 
@@ -136,30 +142,44 @@ public class ArenaManager {
     public void startBorderDamage() {
         if (gameCenter == null) return;
         World world = gameCenter.getWorld();
+        if (world == null) return;
+
+        WorldBorder border = world.getWorldBorder();
+
+        // 1. [핵심] 마인크래프트 자체 장벽 대미지 설정 (가장 정확함)
+        // 버퍼(안전거리)를 0으로 설정해서 선을 밟자마자 아프게 합니다.
+        border.setDamageBuffer(0.0);
+        // 초당 대미지 설정 (한 칸 나갈 때마다 추가 대미지)
+        border.setDamageAmount(3.0);
+
+        // 2. [메시지 알림 전용] 0.25초마다 검사하여 즉각 경고 메시지 전송
+        if (borderDamageTask != null) borderDamageTask.cancel(); // 중복 방지
 
         borderDamageTask = new BukkitRunnable() {
             @Override
             public void run() {
-                WorldBorder b = world.getWorldBorder();
-                double s = b.getSize() / 2.0;
-                Location c = b.getCenter();
+                double size = border.getSize() / 2.0;
+                Location center = border.getCenter();
+
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (p.getWorld().equals(world)) {
-                        Location l = p.getLocation();
-                        if (Math.abs(l.getX() - c.getX()) > s || Math.abs(l.getZ() - c.getZ()) > s) {
-                            p.damage(6.0);
-                            p.sendMessage("§c§l[자기장 밖 대미지]");
-                        }
+                    if (!p.getWorld().equals(world)) continue;
+
+                    // 관전자는 무시
+                    if (p.getGameMode() == GameMode.SPECTATOR) continue;
+
+                    Location loc = p.getLocation();
+                    // 3. [수학적 계산] 장벽 중심에서 플레이어의 거리가 장벽 반지름보다 큰지 확인
+                    if (Math.abs(loc.getX() - center.getX()) > size || Math.abs(loc.getZ() - center.getZ()) > size) {
+
+                        // 직접 대미지를 주는 코드는 주석 처리하거나 보조용으로만 씁니다.
+                        // 왜냐하면 위에서 설정한 border.setDamageAmount가 훨씬 정확하게 때려줍니다.
+                        // p.damage(2.0); // (선택사항) 장벽 대미지가 약하다면 추가로 사용
+
+                        // 액션바에 경고 표시 (메시지 도배 방지)
+                        p.sendActionBar(net.kyori.adventure.text.Component.text("!!! 자기장 구역 밖입니다 !!!").color(net.kyori.adventure.text.format.NamedTextColor.RED).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD));
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0, 20L);
-    }
-
-    // 장벽 멈추기.
-    public void stopTasks() {
-        if (borderShrinkTask != null && !borderShrinkTask.isCancelled()) borderShrinkTask.cancel();
-        if (borderDamageTask != null && !borderDamageTask.isCancelled()) borderDamageTask.cancel();
-        config.spawn_point.getWorld().getWorldBorder().setSize(30000000);
+        }.runTaskTimer(plugin, 0, 5L); // 5틱(0.25초)마다 검사해서 반응 속도 4배 향상!
     }
 }

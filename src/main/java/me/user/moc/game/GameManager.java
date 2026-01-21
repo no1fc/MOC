@@ -6,8 +6,6 @@ import me.user.moc.config.ConfigManager;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -40,7 +38,6 @@ public class GameManager implements Listener {
     private int round = 0;
     // 태스크 관리 (타이머)
     private BukkitTask selectionTask; // 능력 추첨 타이머
-    private BukkitTask battleTask; // 전투 관련 타이머
 
     public GameManager(MocPlugin plugin, ArenaManager arenaManager) {
         this.plugin = plugin;
@@ -65,6 +62,7 @@ public class GameManager implements Listener {
             starter.sendMessage("§c이미 게임이 진행 중입니다.");
             return;
         }
+
         isRunning = true;
         round = 0;
         scores.clear();
@@ -114,25 +112,17 @@ public class GameManager implements Listener {
 
         Bukkit.broadcastMessage("§a§l=== " + round + "라운드 시작! ===");
 
+
+
         // 2-1. 맵 및 플레이어 상태 초기화
         Location center = config.spawn_point;
         if (center == null)
             center = Bukkit.getOnlinePlayers().iterator().next().getLocation();
 
-        // 월드 청소 (떨어진 아이템, 몬스터 삭제)
-        World world = center.getWorld();
-        if (world != null) {
-            for (Entity e : world.getEntities()) {
-                if (e instanceof Item || (e instanceof org.bukkit.entity.Monster)) {
-                    e.remove();
-                }
-            }
-        }
+        // [수정 포인트] 아레나 매니저에게 전장 준비 명령!
+        // 여기서 날씨, 시간, 기반암, 에메랄드, 자기장, 월드 바닥의 아이템, 몬스터 초기화가 다 일어납니다.
+        arenaManager.prepareArena(center);
 
-        // 바닥 생성 (ArenaManager 활용)
-        // 에메랄드 블록 스폰 포인트 생성 및 기반암 바닥
-        arenaManager.generateCircleFloor(center, (int) config.map_size / 2, center.getBlockY() - 1);
-        center.getBlock().setType(Material.EMERALD_BLOCK); // 중심 표시
 
         // 플레이어 초기화 및 능력 배정
         // (중복 안 나오게 셔플)
@@ -335,11 +325,13 @@ public class GameManager implements Listener {
             Bukkit.broadcastMessage("§b게임이 시작되지 않았습니다.");
             return;
         }
-
+        config.spawn_point = null;
         isRunning = false;
         if (selectionTask != null)
             selectionTask.cancel();
         arenaManager.stopTasks(); // 자기장 등 정지
+        // 자기장=월드보더 초기화. 기능 필요.
+
 
         // 점수 내림차순 정렬 및 출력
         List<Map.Entry<UUID, Integer>> sortedScores = new ArrayList<>(scores.entrySet());

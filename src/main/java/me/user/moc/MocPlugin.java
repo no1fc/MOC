@@ -3,6 +3,7 @@ package me.user.moc;
 import me.user.moc.ability.AbilityManager;
 import me.user.moc.command.MocCommand;
 import me.user.moc.game.ArenaManager;
+import me.user.moc.game.ClearManager;
 import me.user.moc.game.GameManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,6 +20,7 @@ public final class MocPlugin extends JavaPlugin {
     private GameManager gameManager;
     private AbilityManager abilityManager;
     private ArenaManager arenaManager;
+    private ClearManager clearManager;
 
     /**
      * 다른 클래스에서 플러그인의 기능(매니저 등)을 가져다 쓰고 싶을 때 사용합니다.
@@ -37,6 +39,8 @@ public final class MocPlugin extends JavaPlugin {
         this.arenaManager = new ArenaManager(this);
         this.gameManager = new GameManager(this, arenaManager);
         this.abilityManager = new AbilityManager(this);
+        // 클리어 매니져
+        this.clearManager = new ClearManager(this);
 
         // 3. GameManager에게 "능력 관리는 이 AbilityManager가 할 거야"라고 알려줍니다. (의존성 주입)
         this.gameManager.setAbilityManager(abilityManager);
@@ -64,4 +68,6 @@ public final class MocPlugin extends JavaPlugin {
     public AbilityManager getAbilityManager() { return abilityManager; }
     public GameManager getGameManager() { return gameManager; }
     public ArenaManager getArenaManager() { return arenaManager; }
+    // 다른 곳에서 쓸 수 있게 getter 추가
+    public ClearManager getClearManager() { return clearManager; }
 }

@@ -1,12 +1,7 @@
 package me.user.moc.ability;
 
 import me.user.moc.MocPlugin;
-import me.user.moc.ability.impl.Magnus;
-import me.user.moc.ability.impl.Midas;
-import me.user.moc.ability.impl.Olaf;
-import me.user.moc.ability.impl.Rammus;
-import me.user.moc.ability.impl.Saitama;
-import me.user.moc.ability.impl.Ueki;
+import me.user.moc.ability.impl.*;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
@@ -83,21 +78,22 @@ public class AbilityManager {
         p.sendMessage("§e=== 당신의 능력은 ===");
 
         // 능력 이름에 따라 서로 다른 설명을 출력합니다.
+        // 유틸, 전투, 복합 3개로만 구분할 예정
         switch (abilityName) {
             case "우에키" -> {
                 p.sendMessage("§a유틸 ● 우에키(우에키의 법칙/배틀짱)");
                 p.sendMessage("§f묘목을 우클릭 시 주변에 떨어진 쓰레기들을 전부 나무로 변경한다.");
             }
             case "올라프" -> {
-                p.sendMessage("§c공격 ● 올라프(리그 오브 레전드)");
+                p.sendMessage("§c전투 ● 올라프(리그 오브 레전드)");
                 p.sendMessage("§f도끼(눈덩이)를 던져 적에게 강력한 고정 피해를 입힌다.");
             }
             case "미다스" -> {
-                p.sendMessage("§6특수 ● 미다스(그리스 신화)");
+                p.sendMessage("§유틸 ● 미다스(그리스 신화)");
                 p.sendMessage("§f금괴로 블록을 우클릭하면 황금 블록으로 변환시킨다.");
             }
             case "매그너스" -> {
-                p.sendMessage("§b이동 ● 매그너스(이터널 리턴)");
+                p.sendMessage("§b복합 ● 매그너스(이터널 리턴)");
                 p.sendMessage("§f오토바이를 소환하여 전방으로 돌진 후 자폭한다.");
             }
             case "람머스" -> {
