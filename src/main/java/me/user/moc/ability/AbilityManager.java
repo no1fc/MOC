@@ -171,14 +171,11 @@ public class AbilityManager {
         int left = rerollCounts.getOrDefault(p.getUniqueId(), 0);
 
         // 1. 리롤 횟수가 0이면 거절합니다.
-        // if (left <= 0) {
-        // p.sendMessage("§c[MOC] 리롤 횟수를 모두 사용했습니다. ");
-        // p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-        //
-        // // 강제 준비 완료
-        // plugin.getGameManager().playerReady(p);
-        // return;
-        // }
+         if (left <= 0) {
+         p.sendMessage("§c[MOC] 리롤 횟수를 모두 사용했습니다. ");
+         p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+         return;
+         }
 
         // 2. 현재 능력을 제외한 나머지 능력 중에서 하나를 랜덤으로 뽑습니다.
         List<String> pool = new ArrayList<>(abilities.keySet());
