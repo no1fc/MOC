@@ -73,6 +73,12 @@ public class GameManager implements Listener {
     public boolean isRunning() {
         return isRunning;
     }
+    /**
+     * 다른 클래스(MocCommand)에서 특정 플레이어가 AFK인지 확인할 수 있게 해주는 함수입니다.
+     */
+    public boolean isAfk(String playerName) {
+        return afkPlayers.contains(playerName);
+    }
 
     // MocPlugin에서 AbilityManager를 설정해주기 위한 세터
     public void setAbilityManager(AbilityManager abilityManager) {
@@ -155,6 +161,13 @@ public class GameManager implements Listener {
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage("§a§l=== " + round + "라운드 시작! ===");
+        if (afkPlayers.isEmpty()) {
+            Bukkit.broadcastMessage("§7열외(AFK) 대상자 : 없음");
+        } else {
+            // String.join을 사용하면 ["A", "B"] 리스트를 "A, B" 문자열로 예쁘게 바꿔줍니다.
+            String afkNames = String.join(", ", afkPlayers);
+            Bukkit.broadcastMessage("§7열외(AFK) 대상자 : " + afkNames);
+        }
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(" ");
@@ -175,8 +188,19 @@ public class GameManager implements Listener {
         int deckIndex = 0;
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (afkPlayers.contains(p.getName()))
+
+            // 1. [핵심] AFK 명단에 있는 사람은 관전 모드로 보내고, 능력 지급 과정에서 제외(continue)합니다.
+            if (isAfk(p.getName())) {
+                p.setGameMode(GameMode.SPECTATOR); // 관전 모드 변경
+                p.sendMessage("§7[MOC] 게임 열외(AFK) 상태이므로 관전 모드로 전환됩니다.");
+                p.sendMessage("§7게임에 참여하고 싶으시면 다음 판에 '/moc afk 본인닉네임'을 입력해 해제하세요.");
+
+                // 아래의 능력 지급 코드를 실행하지 않고 다음 사람으로 넘어갑니다.
                 continue;
+            }
+
+//            if (afkPlayers.contains(p.getName()))
+//                continue;
 
             // [▼▼▼ 여기서부터 변경됨 ▼▼▼]
             // 관전 모드였던 사람도 다시 참여시켜야 하므로 모드 변경 필수!
@@ -222,8 +246,13 @@ public class GameManager implements Listener {
             @Override
             public void run() {
                 // 모든 참가자가 준비 완료(yes)했으면 즉시 시작
-                long activePlayerCount = Bukkit.getOnlinePlayers().stream()
-                        .filter(p -> !afkPlayers.contains(p.getName())).count();
+                // [▼▼▼ 여기서부터 변경됨: AFK 인원 제외하고 남은 사람 수 계산 ▼▼▼]
+                // 전체 인원에서 AFK 인원 수를 뺀 값이 실제 참여 인원입니다.
+                long activePlayerCount = Bukkit.getOnlinePlayers().size() - afkPlayers.size();
+
+                // 만약 모든 플레이어가 AFK라면(참여자가 0명), 게임 진행이 안 되므로 예외 처리
+                if (activePlayerCount <= 0) activePlayerCount = 1;
+                // [▲▲▲ 여기까지 변경됨 ▲▲▲]
 
                 if ((readyPlayers.size() >= activePlayerCount && activePlayerCount > 0) || timeLeft <= 0) {
                     this.cancel();
@@ -587,7 +616,7 @@ public class GameManager implements Listener {
 
             // @@@@@@ 해당 부분은 라운드 시작할 때랑 지금이랑 유저를 비교하여 플레이할 유저가 없어진 경우에만 실행하게 수정 필요함. 아래의 문구를 참고.
             /*
-            * afk 완성 시 `startRoundAfterDelay` 함수 수정 할 부분.
+afk 완성 시 `startRoundAfterDelay` 함수 수정 할 부분.
 
 라운드 종료 후 이전 라운드에 플레이한 사람이
 죽어서 관전 상태가 된 사람을 제외하고
@@ -677,6 +706,12 @@ public class GameManager implements Listener {
     // 능력 리롤.
     public void playerReroll(Player p) {
         if (!isRunning) return;
+        // [▼▼▼ 추가됨: 이미 준비 완료(Yes)한 경우 리롤 차단 ▼▼▼]
+        if (readyPlayers.contains(p.getUniqueId())) {
+            p.sendMessage("§c[!] 준비 완료 후 능력을 바꿀 수 없습니다.");
+            return;
+        }
+        // [▲▲▲ 여기까지 추가됨 ▲▲▲]
         if (abilityManager != null)
             abilityManager.rerollAbility(p);
     }

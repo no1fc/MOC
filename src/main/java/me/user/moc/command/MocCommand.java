@@ -59,6 +59,10 @@ public class MocCommand implements CommandExecutor {
                 if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
                     p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
                     return true;
+                }// [▼▼▼ 추가됨 ▼▼▼]
+                if (gm.isAfk(p.getName())) {
+                    p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
+                    return true;
                 }
                 gm.playerReady(p); // "저 이 능력으로 할게요"라고 등록합니다.
                 return true;
@@ -68,6 +72,10 @@ public class MocCommand implements CommandExecutor {
                 if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
                     p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
                     return true;
+                }// [▼▼▼ 추가됨 ▼▼▼]
+                if (gm.isAfk(p.getName())) {
+                    p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
+                    return true;
                 }
                 gm.playerReroll(p); // 능력을 다시 굴립니다.
                 return true;
@@ -76,6 +84,10 @@ public class MocCommand implements CommandExecutor {
             case "check" -> { // 내 능력 보기: /moc check
                 if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
                     p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
+                    return true;
+                }// [▼▼▼ 추가됨 ▼▼▼]
+                if (gm.isAfk(p.getName())) {
+                    p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
                     return true;
                 }
                 gm.showAbilityDetail(p); // 내 능력이 뭔지 자세한 설명을 보여줍니다.
@@ -95,6 +107,10 @@ public class MocCommand implements CommandExecutor {
             case "set" -> { // 능력 강제 부여: /moc set [닉네임] [능력]
                 if (!p.isOp()) {
                     p.sendMessage("§c권한이 없습니다.");
+                    return true;
+                }// [▼▼▼ 추가됨 ▼▼▼]
+                if (gm.isAfk(p.getName())) {
+                    p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
                     return true;
                 }
                 if (args.length < 3) {
