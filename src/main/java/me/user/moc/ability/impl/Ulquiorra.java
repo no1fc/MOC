@@ -1,0 +1,319 @@
+package me.user.moc.ability.impl;
+
+import me.user.moc.ability.Ability;
+import net.kyori.adventure.text.Component;
+import org.bukkit.*;
+import org.bukkit.entity.*;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
+import org.joml.AxisAngle4f;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class Ulquiorra extends Ability {
+
+    public Ulquiorra(JavaPlugin plugin) {
+        super(plugin);
+    }
+
+    @Override
+    public String getCode() {
+        return "010"; // 코드 010
+    }
+
+    @Override
+    public String getName() {
+        return "우르키오라 쉬퍼"; // 능력 이름
+    }
+
+    @Override
+    public List<String> getDescription() {
+        List<String> lore = new ArrayList<>();
+        lore.add("§f란사 델 렐람파고를 우클릭 시 전방에 발사합니다.");
+        return lore;
+    }
+
+    @Override
+    public void giveItem(Player p) {
+        // 기존 철 칼 제거 (있다면)
+        p.getInventory().remove(Material.IRON_SWORD);
+
+        // 란사 델 렐람파고 (삼지창) 지급
+        ItemStack lanza = new ItemStack(Material.TRIDENT);
+        ItemMeta meta = lanza.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("§a란사 델 렐람파고"));
+            meta.setUnbreakable(true); // 부서지지 않음
+            lanza.setItemMeta(meta);
+        }
+        p.getInventory().addItem(lanza);
+    }
+
+    @Override
+    public void detailCheck(Player p) {
+        p.sendMessage("§a전투 ● 우르키오라 쉬퍼(블리치)");
+        p.sendMessage("§f란사 델 렐람파고를 우클릭하면 본인에게 구속 5를 2초간 부여하고");
+        p.sendMessage("§e'닫아라, 무르시엘라고'§f 메세지가 출력됩니다.");
+        p.sendMessage("§f2초 후 §a'란사 델 렐람파고'§f 메세지와 함께 거대한 삼지창을 날리며");
+        p.sendMessage("§f적중한 생명체를 30블럭까지 끌고가 §c체력 1줄(20)의 방어 무시 피해§f를 줍니다.");
+        p.sendMessage("§7쿨타임 : 20초");
+        p.sendMessage("§7특징 : 기반암을 제외한 모든 블럭을 관통합니다.");
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent e) {
+        Player p = e.getPlayer();
+        ItemStack item = e.getItem();
+
+        // 1. 아이템 체크 (삼지창이고 이름이 포함되어야 함)
+        if (item == null || item.getType() != Material.TRIDENT)
+            return;
+        // Paper API 1.21에서 getDisplayName()은 deprecated이지만, 문자열 비교를 위해 임시 사용하거나
+        // Adventure API 사용.
+        if (item.getItemMeta() == null || !item.getItemMeta().hasDisplayName())
+            return;
+        @SuppressWarnings("deprecation")
+        String displayName = item.getItemMeta().getDisplayName();
+        if (!displayName.contains("란사 델 렐람파고"))
+            return;
+
+        // 2. 액션 체크 (우클릭)
+        if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            // 바닐라 삼지창 투척 방지
+            e.setCancelled(true);
+
+            // 3. 쿨타임 체크 (Ability 부모 클래스 메서드 활용)
+            if (!checkCooldown(p))
+                return;
+
+            // 쿨타임 설정 (20초)
+            setCooldown(p, 20);
+
+            // === [1단계: 시전 준비] ===
+            // 2. 구속 5 (Amplifier 4) 2초 (40 ticks)
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 4));
+
+            // 3. 메시지 출력
+            p.getServer().broadcastMessage("우르키오라 쉬퍼 : §2닫아라, 무르시엘라고");
+
+            // 4. 이펙트 (검녹색 연기) - 2초간 (기존보다 더 풍성하게)
+            org.bukkit.scheduler.BukkitTask chargeTask = new BukkitRunnable() {
+                int ticks = 0;
+
+                @Override
+                public void run() {
+                    if (ticks >= 40) {
+                        this.cancel();
+                        return;
+                    }
+                    // 검녹색 연기: DUST 파티클 (RGB: 13, 54, 21) -> 더 진하게 (0, 100, 0)
+                    Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0, 50, 0), 2.5f);
+                    // 위치: 플레이어 주위에 퍼지게
+                    p.getWorld().spawnParticle(Particle.DUST, p.getLocation().add(0, 1, 0), 10, 0.5, 0.8, 0.5, dust);
+                    // 바닥에도 깔리게
+                    p.getWorld().spawnParticle(Particle.DUST, p.getLocation(), 5, 0.5, 0.1, 0.5, dust);
+
+                    ticks += 2;
+                }
+            }.runTaskTimer(plugin, 0L, 2L);
+            registerTask(p, chargeTask); // cleanup을 위해 등록
+
+            // === [2단계: 발사 (2초 후)] ===
+            org.bukkit.scheduler.BukkitTask launchTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    fireLanza(p);
+                }
+            }.runTaskLater(plugin, 40L); // 20 ticks = 1 sec -> 40 ticks = 2 sec
+            registerTask(p, launchTask);
+        }
+    }
+
+    private void fireLanza(Player p) {
+        // 메시지 출력
+        p.getServer().broadcastMessage("우르키오라 쉬퍼 : §a란사 델 렐람파고");
+
+        Location startLoc = p.getEyeLocation();
+        Vector direction = startLoc.getDirection().normalize();
+
+        // 거대한 삼지창 생성 (ItemDisplay)
+        ItemDisplay projectile = p.getWorld().spawn(startLoc, ItemDisplay.class);
+        projectile.setItemStack(new ItemStack(Material.TRIDENT));
+
+        // 크기 5배 (왕 큰 삼지창)
+        Transformation transform = projectile.getTransformation();
+        transform.getScale().set(5.0f, 5.0f, 5.0f); // 5배 크기
+        // 회전 조절 - X축 90도 (눕히기)
+        transform.getLeftRotation().set(new AxisAngle4f((float) Math.toRadians(90), 1, 0, 0));
+        projectile.setTransformation(transform);
+
+        // 끌려간 엔티티 목록 (중복 피격 방지 + 폭발 시 데미지 대상)
+        Set<Entity> draggedEntities = new HashSet<>();
+
+        // 발사체 이동 태스크
+        org.bukkit.scheduler.BukkitTask projectileTask = new BukkitRunnable() {
+            Location currentLoc = startLoc.clone();
+            double distanceTravelled = 0;
+            final double maxDistance = 30.0;
+            double currentSpeed = 1.5; // 속도
+
+            // 벡터(방향) 저장용
+            Vector currentDir = direction.clone();
+
+            @Override
+            public void run() {
+                // 1. 거리 체크
+                if (distanceTravelled >= maxDistance || !projectile.isValid()) {
+                    explode(currentLoc, draggedEntities, p);
+                    projectile.remove();
+                    this.cancel();
+                    return;
+                }
+
+                // 2. 이동 전 위치 저장
+                Location prevLoc = currentLoc.clone();
+
+                // 3. 기반암 충돌 및 슬라이딩 로직
+                // 다음 위치 예측
+                Location nextLoc = currentLoc.clone().add(currentDir.clone().multiply(currentSpeed));
+
+                // 블럭 체크 (Based on Material)
+                if (nextLoc.getBlock().getType() == Material.BEDROCK) {
+                    // 기반암 충돌: 슬라이딩 (반사 혹은 미끄러짐)
+                    // 충돌 면 계산을 위해 각 축별로 검사
+                    // X축 충돌?
+                    Location testX = currentLoc.clone().add(currentDir.getX() * currentSpeed, 0, 0);
+                    if (testX.getBlock().getType() == Material.BEDROCK) {
+                        currentDir.setX(-currentDir.getX() * 0.5); // 반사 (또는 0으로 만들어서 슬라이딩)
+                        // '얼음에 돌 던진 것 처럼 미끄러짐' -> 반사보다는 튕겨나가는 느낌으로 속도 유지
+                        // 여기서는 반사하되 속도를 살짝 줄임
+                    }
+                    // Y축 충돌?
+                    Location testY = currentLoc.clone().add(0, currentDir.getY() * currentSpeed, 0);
+                    if (testY.getBlock().getType() == Material.BEDROCK) {
+                        currentDir.setY(-currentDir.getY() * 0.5); // 바닥/천장은 반사
+                    }
+                    // Z축 충돌?
+                    Location testZ = currentLoc.clone().add(0, 0, currentDir.getZ() * currentSpeed);
+                    if (testZ.getBlock().getType() == Material.BEDROCK) {
+                        currentDir.setZ(-currentDir.getZ() * 0.5);
+                    }
+
+                    // 방향이 바뀌었으니, 갱신된 방향으로 이동
+                    // 만약 갇혀버리면 멈춤
+                    if (currentDir.length() < 0.1) {
+                        // 멈춤 -> 폭발
+                        explode(currentLoc, draggedEntities, p);
+                        projectile.remove();
+                        this.cancel();
+                        return;
+                    }
+                } else {
+                    // 기반암이 아님 -> 관통 (아무 동작 안 함, 그냥 통과)
+                    // 다른 블럭들은 모두 무시하고 지나감
+                }
+
+                // 이동 적용
+                currentLoc.add(currentDir.clone().multiply(currentSpeed));
+
+                // 디스플레이 엔티티 이동 및 회전
+                projectile.teleport(currentLoc);
+                // 회전: 이동 방향을 바라보게 설정 (Yaw/Pitch 계산)
+                currentLoc.setDirection(currentDir);
+                projectile.setRotation(currentLoc.getYaw(), currentLoc.getPitch());
+
+                distanceTravelled += currentSpeed;
+
+                // 4. 충돌 감지 (엔티티 - 히트박스 크게 3.0)
+                for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 3.0, 3.0, 3.0)) {
+                    if (entity.equals(p))
+                        continue; // 시전자는 제외
+                    if (entity.equals(projectile))
+                        continue; // 투사체 자체 제외
+                    if (entity instanceof LivingEntity) {
+                        draggedEntities.add(entity);
+                    }
+                }
+
+                // 5. 끌고 가기 (Dragged Entities Teleport)
+                for (Entity e : draggedEntities) {
+                    if (e.isValid() && !e.isDead()) {
+                        Location target = currentLoc.clone();
+                        // 끌려갈 때 살짝 뒤에 위치하게 (시각적 개선)
+                        target.subtract(currentDir.clone().multiply(1.0));
+                        target.setYaw(e.getLocation().getYaw());
+                        target.setPitch(e.getLocation().getPitch());
+                        e.teleport(target);
+                    }
+                }
+
+                // 6. 시각 효과 (초록 연기) - 보간(Interpolation) 적용
+                // 이전 위치(prevLoc)에서 현재 위치(currentLoc)까지 촘촘하게 파티클 생성
+                spawnTrail(prevLoc, currentLoc);
+            }
+
+            // 파티클 보간 함수
+            private void spawnTrail(Location start, Location end) {
+                double distance = start.distance(end);
+                Vector vector = end.toVector().subtract(start.toVector());
+                int points = (int) (distance * 5); // 1블럭당 5개 파티클 (매우 촘촘함)
+
+                // 검녹색 연기 옵션
+                Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(0, 50, 0), 2.0f);
+
+                for (int i = 0; i <= points; i++) {
+                    double fraction = (double) i / points;
+                    Location point = start.clone().add(vector.clone().multiply(fraction));
+                    // 메인 줄기
+                    point.getWorld().spawnParticle(Particle.DUST, point, 3, 0.3, 0.3, 0.3, dust);
+                    // 주변에 흩날리는 효과
+                    point.getWorld().spawnParticle(Particle.ASH, point, 2, 0.5, 0.5, 0.5, 0);
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 1L); // 1틱마다 실행
+        registerTask(p, projectileTask);
+    }
+
+    private void explode(Location loc, Set<Entity> targets, Player attacker) {
+        // 1. 폭발 이펙트 (데미지 X, 블록 파괴 X)
+        loc.getWorld().createExplosion(loc, 4.0F, false, false);
+        // 추가 이펙트
+        loc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, loc, 1);
+
+        // 2. 데미지 처리 (수정됨: 40 -> 20)
+        for (Entity e : targets) {
+            if (e instanceof LivingEntity living) {
+                applyTrueDamage(living, 20); // 20 데미지 (하트 10칸)
+            }
+        }
+    }
+
+    private void applyTrueDamage(LivingEntity target, double damage) {
+        // 방어력 무시 로직
+        double currentHealth = target.getHealth();
+        double newHealth = currentHealth - damage;
+
+        // 피격 모션 및 넉백을 위해 0 데미지 이벤트 발생
+        target.damage(0.1);
+        target.setNoDamageTicks(0);
+
+        if (newHealth <= 0) {
+            target.setHealth(0);
+        } else {
+            target.setHealth(newHealth);
+        }
+    }
+}

@@ -83,10 +83,10 @@ public class Zenitsu extends Ability {
 
     private void useThunderclapAndFlash(Player p) {
         // 쿨타임 설정 (15초)
-        setCooldown(p, 15);
+        setCooldown(p, 7);
 
         // 시전 메시지
-        p.sendMessage("§e벽력일섬(霹靂一閃).");
+        p.getServer().broadcastMessage("§e아가츠마 젠이츠 : 벽력일섬(霹靂一閃).");
 
         // 사운드
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 2.0f, 1.2f);

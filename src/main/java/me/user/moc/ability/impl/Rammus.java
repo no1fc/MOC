@@ -26,16 +26,19 @@ public class Rammus extends Ability {
     public String getCode() {
         return "011";
     }
+
     @Override
     public String getName() {
         return "람머스";
     }
+
     @Override
     public List<String> getDescription() {
         return List.of(
                 "§a유틸● 람머스(롤)",
                 "§f거북이 모자를 착용하여 몸 말아 웅크리기를 시전합니다.");
     }
+
     @Override
     public void detailCheck(Player p) {
         p.sendMessage("§a유틸● 람머스(롤)");
@@ -47,11 +50,10 @@ public class Rammus extends Ability {
                 "\n" +
                 "---\n" +
                 "\n" +
-                "추가 장비: 거북이 모자(가시 8 인첸트).\n" +
+                "추가 장비: 거북이 모자(가시 20 인첸트).\n" +
                 "\n" +
                 "장비 제거: 없음.");
     }
-
 
     @Override
     public void giveItem(Player p) {
@@ -59,7 +61,7 @@ public class Rammus extends Ability {
         ItemMeta meta = helmet.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("§a거북이 모자"));
-            meta.addEnchant(Enchantment.THORNS, 8, true);
+            meta.addEnchant(Enchantment.THORNS, 20, true);
             helmet.setItemMeta(meta);
         }
         p.getInventory().addItem(helmet);
@@ -105,7 +107,7 @@ public class Rammus extends Ability {
                 // 효과 적용
                 p.addPotionEffect(
                         new PotionEffect(PotionEffectType.SLOWNESS, PotionEffect.INFINITE_DURATION, 1, false, false));
-                p.sendMessage("§e구른다.");
+                p.getServer().broadcastMessage("§a람머스 : 구른다!");
                 p.playSound(p.getLocation(), Sound.ITEM_ARMOR_EQUIP_TURTLE, 1f, 1f);
             }
         } else {

@@ -55,11 +55,18 @@ public class AbilityManager {
         addAbility(new Alex(plugin)); // 알렉스 등록
         addAbility(new Zenitsu(plugin)); // 아가츠마 젠이츠 등록
         addAbility(new Meliodas(plugin)); // 멜리오다스 등록
+        addAbility(new Ulquiorra(plugin)); // 우르키오라 쉬퍼 등록
     }
 
     private void addAbility(Ability ability) {
         // [핵심] 저장할 때 '코드'를 열쇠로 사용!
         abilities.put(ability.getCode(), ability);
+    }
+
+    //* GameManager가 "능력 뭐뭐 있어?" 하고 물어볼 때 사용합니다.
+    public Set<String> getAbilityCodes() {
+        // 맵에 들어있는 모든 키(능력 코드들)를 복사해서 줍니다.
+        return abilities.keySet();
     }
 
     /**
@@ -172,6 +179,10 @@ public class AbilityManager {
             case "022" -> {
                 p.sendMessage("§d전투 ● 멜리오다스(일곱 개의 대죄)");
                 p.sendMessage("§f검 우클릭 유지 시 받은 피해를 2배로 돌려줍니다.");
+            }
+            case "010" -> {
+                p.sendMessage("§a전투 ● 우르키오라 쉬퍼(블리치)");
+                p.sendMessage("§f란사 델 렐람파고를 우클릭 시 전방에 발사합니다.");
             }
 
             default -> p.sendMessage("§7등록되지 않은 능력입니다.");

@@ -28,7 +28,7 @@ public class MocCommand implements CommandExecutor {
 
         // 3. /moc 만 치고 뒤에 아무것도 안 적었을 때를 대비합니다.
         if (args.length == 0) {
-            //p.sendMessage("§e[MOC] §f사용법: /moc <start|stop|yes|re|check|afk|set>");
+            // p.sendMessage("§e[MOC] §f사용법: /moc <start|stop|yes|re|check|afk|set>");
             // 나중에 /moc help 만들 예정.
             p.sendMessage("§e[MOC] §f /moc help 라고 입력하세요");
             return true;
@@ -59,7 +59,7 @@ public class MocCommand implements CommandExecutor {
                 if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
                     p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
                     return true;
-                }// [▼▼▼ 추가됨 ▼▼▼]
+                } // [▼▼▼ 추가됨 ▼▼▼]
                 if (gm.isAfk(p.getName())) {
                     p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
                     return true;
@@ -72,7 +72,7 @@ public class MocCommand implements CommandExecutor {
                 if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
                     p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
                     return true;
-                }// [▼▼▼ 추가됨 ▼▼▼]
+                } // [▼▼▼ 추가됨 ▼▼▼]
                 if (gm.isAfk(p.getName())) {
                     p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
                     return true;
@@ -85,7 +85,7 @@ public class MocCommand implements CommandExecutor {
                 if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
                     p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
                     return true;
-                }// [▼▼▼ 추가됨 ▼▼▼]
+                } // [▼▼▼ 추가됨 ▼▼▼]
                 if (gm.isAfk(p.getName())) {
                     p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
                     return true;
@@ -108,7 +108,7 @@ public class MocCommand implements CommandExecutor {
                 if (!p.isOp()) {
                     p.sendMessage("§c권한이 없습니다.");
                     return true;
-                }// [▼▼▼ 추가됨 ▼▼▼]
+                } // [▼▼▼ 추가됨 ▼▼▼]
                 if (gm.isAfk(p.getName())) {
                     p.sendMessage("§c[!] 당신은 현재 게임 열외(AFK) 상태입니다.");
                     return true;
@@ -124,18 +124,17 @@ public class MocCommand implements CommandExecutor {
             }
 
             case "list" -> { // 목록 조회: /moc list
-//                if (!p.isOp()) { // 관리자(OP)만 시작할 수 있게 감시합니다.
-//                    p.sendMessage("§c권한이 없습니다.");
-//                    return true;
-//                }
-//                if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
-//                    p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
-//                    return true;
-//                }
+                // if (!p.isOp()) { // 관리자(OP)만 시작할 수 있게 감시합니다.
+                // p.sendMessage("§c권한이 없습니다.");
+                // return true;
+                // }
+                // if (!gm.isRunning()) { // <--- [여기 변경됨!!!] 게임 중인지 확인
+                // p.sendMessage("§c현재 진행 중인 게임이 없습니다.");
+                // return true;
+                // }
                 am.showAbilityList(p);
                 return true;
             }
-
 
             default -> {
                 p.sendMessage("§c /moc help 를 입력하세요.");

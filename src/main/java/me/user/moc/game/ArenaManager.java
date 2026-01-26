@@ -1,18 +1,20 @@
 // 파일 경로: src/main/java/me/user/moc/game/ArenaManager.java
 package me.user.moc.game;
 
-import me.user.moc.MocPlugin;
-import me.user.moc.config.ConfigManager;
-import me.user.moc.game.GameManager;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import java.util.List;
-import java.util.ArrayList; // ArrayList를 사용하기 위해 필요합니다.
-import java.util.List; // List를 사용하기 위해 필요합니다.
-import java.util.stream.Collectors; // 이름을 합치는 기능을 위해 필요합니다.
+
+import me.user.moc.MocPlugin;
+import me.user.moc.config.ConfigManager;
 
 public class ArenaManager {
     private final MocPlugin plugin;
@@ -22,11 +24,15 @@ public class ArenaManager {
     private BukkitTask borderShrinkTask; // 자기장 및 진행 관련 타이머
     private BukkitTask borderDamageTask; // 대미지 체크 타이머
     private BukkitTask generateTask; // 맵 공사 타이머 (추가됨!)
-    GameManager gm = GameManager.getInstance(MocPlugin.getInstance());
+    private GameManager gm;
 
     public ArenaManager(MocPlugin plugin) {
         this.plugin = plugin;
         this.clearManager = new ClearManager(plugin);
+    }
+
+    public void setGameManager(GameManager gm) {
+        this.gm = gm;
     }
 
     /**
