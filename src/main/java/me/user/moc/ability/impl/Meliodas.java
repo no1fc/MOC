@@ -180,7 +180,7 @@ public class Meliodas extends Ability {
         accumulatedDamageMap.remove(p.getUniqueId());
 
         // 발동 이펙트
-        p.sendMessage("§d§l풀 카운터!");
+        p.getServer().broadcastMessage("§d§l멜리오다스 : 풀 카운터!");
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_GLASS_BREAK, 2.0f, 0.5f); // 유리 깨지는 소리
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.5f);
         p.getWorld().spawnParticle(Particle.EXPLOSION, p.getLocation(), 1);

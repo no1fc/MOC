@@ -56,8 +56,8 @@ public class Byakuya extends Ability {
         p.sendMessage("§e능력명: §f쿠치키 뱌쿠야 (블리치)");
         p.sendMessage("§e타입: §c전투 / 광역 제어");
         p.sendMessage("§e발동 조건: §f철 검 우클릭");
-        p.sendMessage("§e쿨타임: §f50초");
-        p.sendMessage("§e지속 시간: §f30초");
+        p.sendMessage("§e쿨타임: §f20초");
+        p.sendMessage("§e지속 시간: §f10초");
         p.sendMessage("§e효과:");
         p.sendMessage("  §7- §d만해(卍解)§7를 사용하여 반경 30블록을 벚꽃으로 뒤덮습니다.");
         p.sendMessage("  §7- 범위 내 §c자신을 제외한 모든 생명체§7에게 1초당 2의 피해(1칸)를 입힙니다.");
@@ -74,7 +74,7 @@ public class Byakuya extends Ability {
             }
             taskList.clear();
             p.setWalkSpeed(0.2f); // 기본 속도로 복구
-            p.sendMessage("§d[MOC] §f천본앵이 흩어집니다.");
+            p.sendMessage("§f천본앵이 흩어집니다.");
         }
     }
 
@@ -135,21 +135,22 @@ public class Byakuya extends Ability {
         }
 
         // 3. 스킬 발동
-        p.sendActionBar(Component.text("§d흩날려라, 천본앵(千本桜).")
-                .color(TextColor.color(0xFFB6C1)));
+        p.getServer().broadcast(
+                Component.text("쿠치키 바쿠야 : 흩날려라, 천본앵(千本桜).")
+                        .color(TextColor.color(0xFFB6C1)));
         p.getWorld().playSound(p.getLocation(), Sound.BLOCK_ANVIL_PLACE, 1.0f, 2.0f); // 칭!
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_BREEZE_WIND_BURST, 1.0f, 0.5f); // 웅장한 바람 소리
 
-        // 쿨타임 설정 (50초)
-        setCooldown(p, 50);
+        // 쿨타임 설정 (20초)
+        setCooldown(p, 20);
 
         // 이동 속도 패널티 (10% 감소) -> 0.2f * 0.9 = 0.18f
         p.setWalkSpeed(0.18f);
 
-        // 4. 지속 효과 (30초 동안)
+        // 4. 지속 효과 (10초 동안)
         BukkitTask task = new BukkitRunnable() {
             int ticks = 0;
-            final int maxTicks = 30 * 20; // 30초
+            final int maxTicks = 10 * 20; // 10초
             final double radius = 30.0;
 
             @Override

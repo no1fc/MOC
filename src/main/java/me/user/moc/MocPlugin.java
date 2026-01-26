@@ -37,7 +37,8 @@ public final class MocPlugin extends JavaPlugin {
         this.gameManager = new GameManager(this, arenaManager);
         this.abilityManager = new AbilityManager(this);
         this.clearManager = new ClearManager(this);
-
+        // 1. 게임 매니저가 만들어졌으니, 아레나 매니저에게 알려줍니다. (NullPointerException 방지)
+        this.arenaManager.setGameManager(this.gameManager);
         // [순서 4번] 게임 관리자에게 능력 관리자를 소개시켜 줍니다.
         this.gameManager.setAbilityManager(abilityManager);
 
@@ -61,9 +62,23 @@ public final class MocPlugin extends JavaPlugin {
     }
 
     // --- 다른 파일에서 빌려가기 위한 입구들 (Getter) ---
-    public AbilityManager getAbilityManager() { return abilityManager; }
-    public GameManager getGameManager() { return gameManager; }
-    public ArenaManager getArenaManager() { return arenaManager; }
-    public ClearManager getClearManager() { return clearManager; }
-    public ConfigManager getConfigManager() { return configManager; }
+    public AbilityManager getAbilityManager() {
+        return abilityManager;
+    }
+
+    public GameManager getGameManager() {
+        return gameManager;
+    }
+
+    public ArenaManager getArenaManager() {
+        return arenaManager;
+    }
+
+    public ClearManager getClearManager() {
+        return clearManager;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
 }

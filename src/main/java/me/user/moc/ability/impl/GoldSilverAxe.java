@@ -100,8 +100,7 @@ public class GoldSilverAxe extends Ability {
                     // 효과 연출 (흰 연기 + 소리)
                     p.getWorld().spawnParticle(Particle.CLOUD, itemDrop.getLocation(), 20, 0.5, 0.5, 0.5, 0.1);
                     p.getWorld().playSound(itemDrop.getLocation(), Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 1f, 1f);
-
-                    p.sendMessage("§b[금도끼 은도끼] §f이 도끼가 네 도끼냐?");
+                    p.getServer().broadcastMessage("§b금도끼 은도끼 : 이 도끼가 네 도끼냐?");
 
                     // 기존 아이템 제거
                     itemDrop.remove();

@@ -20,7 +20,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class GameManager implements Listener {
@@ -182,8 +181,18 @@ public class GameManager implements Listener {
         arenaManager.prepareArena(center);
 
         // 플레이어 초기화 및 능력 배정
-        // (중복 안 나오게 셔플)
-        List<String> deck = new ArrayList<>(Arrays.asList("001", "002", "003", "004", "020"));
+        // 변경: AbilityManager에 등록된 모든 코드를 자동으로 긁어옵니다.
+        // 이제 능력을 새로 만들고 AbilityManager에 등록만 하면, 여긴 건들지 않아도 됩니다.
+        List<String> deck = new ArrayList<>();
+        if (abilityManager != null) {
+            deck.addAll(abilityManager.getAbilityCodes());
+        } else {
+            // 만약 매니저가 없으면 비상용으로 기본 코드만 넣음 (안전장치)
+            deck.add("001");
+            Bukkit.getLogger().warning("AbilityManager가 연결되지 않아 덱을 생성하지 못했습니다.");
+        }
+
+        // 덱 섞기
         Collections.shuffle(deck);
         int deckIndex = 0;
 
@@ -279,6 +288,12 @@ public class GameManager implements Listener {
     private void prepareBattle() {
         if (!isRunning)
             return;
+        // 여기에 준비 안 된 플레이어들 전부 레디상태로 변경시켜줘.
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!afkPlayers.contains(p.getUniqueId()) && !readyPlayers.contains(p.getUniqueId())) {
+                readyPlayers.add(p.getUniqueId());
+            }
+        }
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage("§6모든 플레이어가 준비되었습니다. 전장으로 이동합니다!");
 
