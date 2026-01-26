@@ -66,7 +66,7 @@ public class Meliodas extends Ability {
         p.sendMessage("§f준비 상태에서는 받는 피해가 §a50% 감소§f하며, 피해량이 누적됩니다.");
         p.sendMessage("§f3초 후 또는 해제 시 주변 5블록 적에게 §c누적 피해의 200%§f를 입힙니다.");
         p.sendMessage("§f발동 후 3초간 움직일 수 없습니다.");
-        p.sendMessage("§f쿨타임 : 20초");
+        p.sendMessage("§f쿨타임 : 30초");
     }
 
     @Override
@@ -132,7 +132,7 @@ public class Meliodas extends Ability {
     }
 
     private void startFullCounterStance(Player p) {
-        setCooldown(p, 20);
+        setCooldown(p, 30);
         preparingPlayers.add(p.getUniqueId());
         accumulatedDamageMap.put(p.getUniqueId(), 0.0);
 
