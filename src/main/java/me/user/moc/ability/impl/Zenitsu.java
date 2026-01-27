@@ -52,8 +52,8 @@ public class Zenitsu extends Ability {
     public void detailCheck(Player p) {
         p.sendMessage("§e전투 ● 아가츠마 젠이츠 (귀멸의 칼날)");
         p.sendMessage("§f검을 들고 우클릭 시 §e벽력일섬(霹靂一閃)§f을 시전합니다.");
-        p.sendMessage("§f전방 15블록을 순간 이동하며 경로상의 적에게 §c4칸의 피해§f를 입힙니다.");
-        p.sendMessage("§f사용 직후 2초간 §b신속 3§f 버프를 얻습니다.");
+        p.sendMessage("§f전방 6블록을 순간 이동하며 경로상의 적에게 §c4칸의 피해§f를 입힙니다.");
+        p.sendMessage("§f사용 직후 1초간 §b신속 1§f 버프를 얻습니다.");
         p.sendMessage("§f쿨타임 : 4초");
     }
 
@@ -94,7 +94,7 @@ public class Zenitsu extends Ability {
 
         Location startLoc = p.getLocation();
         Vector dir = startLoc.getDirection().normalize();
-        double maxDistance = 15.0;
+        double maxDistance = 6.0;
 
         // 벽 통과 방지 RayTrace
         RayTraceResult result = p.getWorld().rayTraceBlocks(
@@ -162,6 +162,6 @@ public class Zenitsu extends Ability {
         }
 
         // 특수 효과: 신속 3 (2초) -> Speed 3 = Amplifier 2
-        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 2));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 20, 0));
     }
 }

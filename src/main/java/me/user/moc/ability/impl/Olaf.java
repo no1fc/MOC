@@ -266,7 +266,7 @@ public class Olaf extends Ability {
                     // 쿨타임 초기화
                     cooldowns.remove(p.getUniqueId());
 
-                    p.sendMessage("§a[!] 도끼를 회수하여 쿨타임이 초기화되었습니다.");
+                    p.sendMessage("§a[!] 도끼 회수");
                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
 
                 } else {

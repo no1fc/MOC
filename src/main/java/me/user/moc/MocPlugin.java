@@ -50,7 +50,7 @@ public final class MocPlugin extends JavaPlugin {
         }
 
         // 서버 콘솔창에 로그를 남깁니다.
-        getLogger().info("MOC v0.1.1 (마크버전 1.21.1) 플러그인이 성공적으로 켜졌습니다!");
+        getLogger().info("MOC v0.1.1 (마크버전 1.21.11) 플러그인이 성공적으로 켜졌습니다!");
     }
 
     @Override
