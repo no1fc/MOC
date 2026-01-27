@@ -114,6 +114,11 @@ public abstract class Ability implements Listener {
     }
 
     protected boolean checkCooldown(Player p) {
+        // [긴급 수정] 크리에이티브 모드라면 쿨타임 및 제한 무시 (테스트 편의성)
+        if (p.getGameMode() == org.bukkit.GameMode.CREATIVE) {
+            return true;
+        }
+
         // [게임 상태 확인] 전투 전에는 능력 사용 불가
         MocPlugin moc = (MocPlugin) plugin;
         GameManager gm = moc.getGameManager();

@@ -124,6 +124,7 @@ public class GameManager implements Listener {
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage(" ");
         Bukkit.broadcastMessage("§e=== 마인크래프트 오브 캐릭터즈 (버전 0.1.1) ===");
+        Bukkit.broadcastMessage("§e=== 제작 : 원크, 알아서해 ===");
         Bukkit.broadcastMessage("§f기본 체력: 3줄(60칸)");
         Bukkit.broadcastMessage("§f기본 지급: 철칼, 구운 소고기64개, 물 양동이, 유리10개, 재생포션, 철 흉갑");
 

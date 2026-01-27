@@ -57,6 +57,9 @@ public class AbilityManager {
         addAbility(new Meliodas(plugin)); // 멜리오다스 등록
         addAbility(new Ulquiorra(plugin)); // 우르키오라 쉬퍼 등록
         addAbility(new TrafalgarLaw(plugin)); // 트라팔가 로우 등록
+        addAbility(new CuChulainn(plugin)); // 쿠 훌린 등록
+        addAbility(new Naruto(plugin)); // 나루토 등록
+        addAbility(new Inuyasha(plugin)); // 이누야샤 등록
     }
 
     private void addAbility(Ability ability) {
